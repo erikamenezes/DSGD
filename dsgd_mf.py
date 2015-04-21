@@ -32,51 +32,51 @@ def getSparse(V,rowSize,colSize,row_start,col_start):
 
 def SGD(x):
 
-    T0 = 100
-    n = x[7]
+    	T0 = 100
+    	n = x[7]
 
-    #get number of non zero updates
-    max_iter=V[:,:].nonzero()[0].size
+    	#get number of non zero updates
+    	max_iter=V[:,:].nonzero()[0].size
 
-    W = x[1]
-    H = x[2]
+    	W = x[1]
+    	H = x[2]
 	
-    V = getSparse(x[0],W.shape[0],H.shape[1],x[3],x[5])
-    no_rows = V.shape[0]
-    no_cols = V.shape[1]
+    	V = getSparse(x[0],W.shape[0],H.shape[1],x[3],x[5])
+    	no_rows = V.shape[0]
+    	no_cols = V.shape[1]
 
-    iter=0
+    	iter=0
     
-    epsilon = pow(T0+n,-1*beta_value)
+    	epsilon = pow(T0+n,-1*beta_value)
 
-    while(True):
-    	#get random row id and col id
-        row = randint(0,no_rows-1) 
-        col = randint(0,no_cols-1)
-        flag = 0
+    	while(True):
+    		#get random row id and col id
+        	row = randint(0,no_rows-1) 
+        	col = randint(0,no_cols-1)
+        	flag = 0
 
-        #perform updates for all non zero entries
-        if V[row,col] > 0:
+        	#perform updates for all non zero entries
+        	if V[row,col] > 0:
                     
-		#update learning rate parameter
-	        W1 = W[row,: ]
-        	H1 = H[:,col]
+			#update learning rate parameter
+	        	W1 = W[row,: ]
+        		H1 = H[:,col]
 
-         	temp = V[row,col] - W1.dot(H1)                     
+         		temp = V[row,col] - W1.dot(H1)                     
 		
-		#perform gradient updates
-		W_update = -2.0*(temp)*H1.transpose() + 2.0*(lambda_value/ V[row,:].nonzero()[0].size)*W1
-	        H_update = -2.0*(temp)*W1.transpose() + 2.0*(lambda_value/ V[:,col].nonzero()[0].size)*H1
+			#perform gradient updates
+			W_update = -2.0*(temp)*H1.transpose() + 2.0*(lambda_value/ V[row,:].nonzero()[0].size)*W1
+	        	H_update = -2.0*(temp)*W1.transpose() + 2.0*(lambda_value/ V[:,col].nonzero()[0].size)*H1
 
-	       	W[row,:] = W[row,:] - epsilon * W_update
-		H[:,col] = H[:,col] - epsilon * H_update
+	       		W[row,:] = W[row,:] - epsilon * W_update
+			H[:,col] = H[:,col] - epsilon * H_update
 
-		iter+=1
+			iter+=1
 
         if iter>max_iter:
             break
 
-    return (W,H,n + iter,x[3],x[4],x[5],x[6])
+    	return (W,H,n + iter,x[3],x[4],x[5],x[6])
 
 def LoadNetSparse():
         
@@ -233,9 +233,9 @@ def main():
 		loss = LNZSL + lambda_value * (np.sum(W*W) + np.sum(H*H))
 	
 		if np.fabs(loss - prev_loss) < tol:
-				break
+			break
 		else:
-				prev_loss = loss
+			prev_loss = loss
 		
 
     	#function to calculate the MSE error       
