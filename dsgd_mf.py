@@ -127,43 +127,41 @@ def writeMSE(V, pred, iteration):
         mseOutput.write("Iteration {0} {1}".format(iteration, mse/len(V.collect())))
 
 def main():
+	conf = SparkConf().setAppName("DSGD")#.setMaster("local[3]")
+    	sc = SparkContext(conf=conf)
 
-    conf = SparkConf().setAppName("DSGD")#.setMaster("local[3]")
-    sc = SparkContext(conf=conf)
-
-    #load rating from trainfile
-    rdd = sc.textFile(trainfile).map(lambda x: x.split(",")).map(lambda x: (int(x[0])-1, int(x[1])-1, float(x[2])))
+    	#load rating from trainfile
+    	rdd = sc.textFile(trainfile).map(lambda x: x.split(",")).map(lambda x: (int(x[0])-1, int(x[1])-1, float(x[2])))
         
-    #get max users
-    users = rdd.map(lambda x: x[0]).max() + 1
-    #get max movies
-    movies = rdd.map(lambda x: x[1]).max() + 1
+    	#get max users
+    	users = rdd.map(lambda x: x[0]).max() + 1
+    	#get max movies
+    	movies = rdd.map(lambda x: x[1]).max() + 1
 
-    curr_block = []
+    	curr_block = []
         
-   prev_loss = -1.0
-   tol=0.00001
+    	prev_loss = -1.0
+    	tol=0.00001
 
-    #initialize W and H to random non zero matrices
-    W =  np.random.rand(users,no_factors)
-    H = np.random.rand(no_factors,movies)
+    	#initialize W and H to random non zero matrices
+    	W =  np.random.rand(users,no_factors)
+    	H = np.random.rand(no_factors,movies)
 
-    index_V = np.zeros((no_workers,4*no_workers))
+    	index_V = np.zeros((no_workers,4*no_workers))
 
-    user_blocks = users / no_workers
-    movie_blocks = movies / no_workers
+    	user_blocks = users / no_workers
+    	movie_blocks = movies / no_workers
 
-    if users%no_workers > 0:
-	user_blocks = users / no_workers +1
+    	if users%no_workers > 0:
+		user_blocks = users / no_workers +1
 
-    if movies%no_workers > 0:
-	movie_blocks = movies/ no_workers +1
+    	if movies%no_workers > 0:
+		movie_blocks = movies/ no_workers +1
        
-    #block partition logic
-    #stroes the boundary indices for each blcok
-    #iterate through each strate
-    
-    for i in range (0,no_workers):
+    	#block partition logic
+    	#stroes the boundary indices for each blcok
+    	#iterate through each strate
+    	for i in range (0,no_workers):
             	
 		#print 'strata {0}'.format(k)
    		for j in range(0,no_workers):
@@ -240,15 +238,15 @@ def main():
 				prev_loss = loss
 		
 
-    #function to calculate the MSE error       
-    #writeMSE(rdd, W.dot(H), k + 1)
-    writeMatrix(W,"W.csv")
-    writeMatrix(H,"H.csv")
-    #global mseOutput
-    #mseOutput.close()
+    	#function to calculate the MSE error       
+    	#writeMSE(rdd, W.dot(H), k + 1)
+    	writeMatrix(W,"W.csv")
+    	writeMatrix(H,"H.csv")
+    	#global mseOutput
+    	#mseOutput.close()
 
 	#stop spark context
-    sc.stop()
+    	sc.stop()
 
 
 
