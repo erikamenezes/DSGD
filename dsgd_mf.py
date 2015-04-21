@@ -35,21 +35,19 @@ def SGD(x):
     T0 = 100
     n = x[7]
 
-	   #get number of non zero updates
+    #get number of non zero updates
     max_iter=V[:,:].nonzero()[0].size
 
     W = x[1]
     H = x[2]
 	
-	V = getSparse(x[0],W.shape[0],H.shape[1],x[3],x[5])
+    V = getSparse(x[0],W.shape[0],H.shape[1],x[3],x[5])
     no_rows = V.shape[0]
     no_cols = V.shape[1]
 
     iter=0
     
     epsilon = pow(T0+n,-1*beta_value)
-
-    
 
     while(True):
     	#get random row id and col id
@@ -60,22 +58,20 @@ def SGD(x):
         #perform updates for all non zero entries
         if V[row,col] > 0:
                     
-			#update learning rate parameter
-            W1 = W[row,: ]
-            H1 = H[:,col]
+		#update learning rate parameter
+	        W1 = W[row,: ]
+        	H1 = H[:,col]
 
-		    temp = V[row,col] - W1.dot(H1)                     
+         	temp = V[row,col] - W1.dot(H1)                     
 		
-			#perform gradient updates
-			W_update = -2.0*(temp)*H1.transpose() + 2.0*(lambda_value/ V[row,:].nonzero()[0].size)*W1
-            H_update = -2.0*(temp)*W1.transpose() + 2.0*(lambda_value/ V[:,col].nonzero()[0].size)*H1
+		#perform gradient updates
+		W_update = -2.0*(temp)*H1.transpose() + 2.0*(lambda_value/ V[row,:].nonzero()[0].size)*W1
+	        H_update = -2.0*(temp)*W1.transpose() + 2.0*(lambda_value/ V[:,col].nonzero()[0].size)*H1
 
-            W[row,:] = W[row,:] - epsilon * W_update
-            H[:,col] = H[:,col] - epsilon * H_update
+	       	W[row,:] = W[row,:] - epsilon * W_update
+		H[:,col] = H[:,col] - epsilon * H_update
 
-        
-            iter+=1
-
+		iter+=1
 
         if iter>max_iter:
             break
@@ -135,20 +131,20 @@ def main():
     conf = SparkConf().setAppName("DSGD")#.setMaster("local[3]")
     sc = SparkContext(conf=conf)
 
-	#load rating from trainfile
+    #load rating from trainfile
     rdd = sc.textFile(trainfile).map(lambda x: x.split(",")).map(lambda x: (int(x[0])-1, int(x[1])-1, float(x[2])))
         
-	#get max users
-	users = rdd.map(lambda x: x[0]).max() + 1
-        #get max movies
-	movies = rdd.map(lambda x: x[1]).max() + 1
+    #get max users
+    users = rdd.map(lambda x: x[0]).max() + 1
+    #get max movies
+    movies = rdd.map(lambda x: x[1]).max() + 1
 
     curr_block = []
         
-   	prev_loss = -1.0
-   	tol=0.00001
+   prev_loss = -1.0
+   tol=0.00001
 
-	#initialize W and H to random non zero matrices
+    #initialize W and H to random non zero matrices
     W =  np.random.rand(users,no_factors)
     H = np.random.rand(no_factors,movies)
 
@@ -158,15 +154,16 @@ def main():
     movie_blocks = movies / no_workers
 
     if users%no_workers > 0:
-		user_blocks = users / no_workers +1
+	user_blocks = users / no_workers +1
 
-	if movies%no_workers > 0:
-		movie_blocks = movies/ no_workers +1
+    if movies%no_workers > 0:
+	movie_blocks = movies/ no_workers +1
        
-	#block partition logic
-	#stroes the boundary indices for each blcok
-	 	#iterate through each strate
-	for i in range (0,no_workers):
+    #block partition logic
+    #stroes the boundary indices for each blcok
+    #iterate through each strate
+    
+    for i in range (0,no_workers):
             	
 		#print 'strata {0}'.format(k)
    		for j in range(0,no_workers):
@@ -192,30 +189,30 @@ def main():
 
         
 	# creating keys for each Partitions/block
-    partitions = rdd.keyBy(lambda x: getStratum(x,no_workers,user_blocks,movie_blocks))
+        partitions = rdd.keyBy(lambda x: getStratum(x,no_workers,user_blocks,movie_blocks))
 
 	#epochs
-    for k in range(0,no_iter):
-        n=0
+    	for k in range(0,no_iter):
+        	n=0
 		#strata
 		for i in range(0,no_workers):
 	
-			#filter all blocks belonging to 1 stratum
+		#filter all blocks belonging to 1 stratum
 	    	blocks = partitions.filter(lambda x: x[0] == i)  #stratum
 	
 	    	data = []
 			
 			#get V,W,H for each block in the stratum
-	    	for j in range(0,no_workers):
+		    	for j in range(0,no_workers):
 			#filter ratings for 1 block of the stratum
 			curr_V = blocks.filter(lambda x: x[1][0]/user_blocks ==j)
-	        curr_W = W[index_V[i,4*j]:index_V[i,4*j+1],:]
-	        curr_H = H[:,index_V[i,4*j+2]:index_V[i,4*j+3]]
-	        data.append((curr_V.collect(),curr_W,curr_H,index_V[i,4*j],index_V[i,4*j+1],index_V[i,4*j+2],index_V[i,4*j+3],n))
-	
-			
-	    	r = sc.parallelize(data,no_workers).map(lambda x : SGD(x)).collect()
-	                   	
+		        curr_W = W[index_V[i,4*j]:index_V[i,4*j+1],:]
+		        curr_H = H[:,index_V[i,4*j+2]:index_V[i,4*j+3]]
+		        data.append((curr_V.collect(),curr_W,curr_H,index_V[i,4*j],index_V[i,4*j+1],index_V[i,4*j+2],index_V[i,4*j+3],n))
+		
+				
+		    	r = sc.parallelize(data,no_workers).map(lambda x : SGD(x)).collect()
+		                   	
 			#iterate through results from SGD to sum on the iterations that is passed 
 			#to the next strata
 			for tuple in r:
@@ -227,23 +224,23 @@ def main():
 	
 				W[row_start:row_end,:] = tuple[0]
 				H[:,col_start:col_end] = tuple[1]
-        
-        nz_rows, nz_cols = V.nonzero()
+	
+	        nz_rows, nz_cols = V.nonzero()
 		temp =  W.dot(H)
-
+	
 			#calculate error to check for convergence
 		LNZSL = V[nz_rows,nz_cols] - temp[nz_rows,nz_cols]
 		LNZSL = np.sum(LNZSL*LNZSL.T)
-
+	
 		loss = LNZSL + lambda_value * (np.sum(W*W) + np.sum(H*H))
-
+	
 		if np.fabs(loss - prev_loss) < tol:
 				break
 		else:
 				prev_loss = loss
 		
 
-	#function to calculate the MSE error       
+    #function to calculate the MSE error       
     #writeMSE(rdd, W.dot(H), k + 1)
     writeMatrix(W,"W.csv")
     writeMatrix(H,"H.csv")
