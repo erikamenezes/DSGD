@@ -197,10 +197,10 @@ def main():
 		#strata
 		for i in range(0,no_workers):
 	
-		#filter all blocks belonging to 1 stratum
-	    	blocks = partitions.filter(lambda x: x[0] == i)  #stratum
+			#filter all blocks belonging to 1 stratum
+	    		blocks = partitions.filter(lambda x: x[0] == i)  #stratum
 	
-	    	data = []
+	    		data = []
 			
 			#get V,W,H for each block in the stratum
 		    	for j in range(0,no_workers):
